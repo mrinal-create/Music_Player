@@ -41,4 +41,50 @@ const showSongs = () => {
     console.log("\n■ No song playing");
 };
 
+const quit = () => {
+    process.stdin.setRawMode(false);
+    process.stdin.pause();
+
+    console.clear();
+    console.log("Goodbye! 👋");
+
+    process.exit();
+};
+
+process.stdin.setRawMode(true);
+process.stdin.resume();
+
+process.stdin.on("data", data => {
+
+    const key = data[0];
+
+    // Ctrl + C / Q
+    if (key === 3 || key === 113 || key === 81) {
+        quit();
+    }
+
+    // Arrow keys
+    if (data[0] === 27 && data[1] === 91) {
+
+        const songs = getSongs();
+
+        // UP
+        if (data[2] === 65 && index > 0) {
+            index--;
+        }
+
+        // DOWN
+        if (data[2] === 66 && index < songs.length - 1) {
+            index++;
+        }
+
+        showSongs();
+    }
+
+    // ENTER
+    if (key === 13) {
+        console.log("Play selected song");
+    }
+});
+
 showSongs();
