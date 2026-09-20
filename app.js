@@ -3,16 +3,24 @@ const fs = require("fs");
 const path = require("path");
 
 const songsDir = path.join(__dirname, "songs");
+const favDir = path.join(__dirname, "favourites");
+
+if (!fs.existsSync(favDir)) fs.mkdirSync(favDir);
 
 let player = null;
 let index = 0;
+let mode = "all";
+let paused = false;
 
 const getSongs = () => {
-    return fs.readdirSync(songsDir)
+    const dir = mode === "all" ? songsDir : favDir;
+
+    return fs.readdirSync(dir)
         .filter(f => f.toLowerCase().endsWith(".mp3"));
 };
 
 const showSongs = () => {
+
     console.clear();
 
     const songs = getSongs();
@@ -21,7 +29,7 @@ const showSongs = () => {
     console.log("        🎵 TERMINAL PLAYER");
     console.log("=================================\n");
 
-    console.log("ALL SONGS\n");
+    console.log(mode === "all" ? "ALL SONGS\n" : "FAVOURITES\n");
 
     if (!songs.length) {
         console.log("No songs found.\n");
@@ -40,7 +48,9 @@ const showSongs = () => {
     console.log("2    : All Songs");
     console.log("Q    : Quit");
 
-    if (player) {
+    if (paused) {
+        console.log("\n⏸ Paused");
+    } else if (player) {
         console.log("\n▶ Playing");
     } else {
         console.log("\n■ No song playing");
@@ -58,12 +68,39 @@ const playSong = i => {
     }
 
     index = i;
+    paused = false;
+
+    const dir = mode === "all" ? songsDir : favDir;
 
     player = spawn("afplay", [
-        path.join(songsDir, songs[i])
+        path.join(dir, songs[i])
     ]);
 
     showSongs();
+};
+
+const pause = () => {
+
+    if (player && !paused) {
+
+        player.kill("SIGSTOP");
+
+        paused = true;
+
+        showSongs();
+    }
+};
+
+const resume = () => {
+
+    if (player && paused) {
+
+        player.kill("SIGCONT");
+
+        paused = false;
+
+        showSongs();
+    }
 };
 
 const quit = () => {
@@ -114,6 +151,34 @@ process.stdin.on("data", data => {
     // ENTER
     if (key === 13) {
         playSong(index);
+    }
+
+    // A
+    if (key === 65 || key === 97) {
+        pause();
+    }
+
+    // D
+    if (key === 68 || key === 100) {
+        resume();
+    }
+
+    // 1 = Favourites
+    if (key === 49) {
+
+        mode = "favourites";
+        index = 0;
+
+        showSongs();
+    }
+
+    // 2 = All Songs
+    if (key === 50) {
+
+        mode = "all";
+        index = 0;
+
+        showSongs();
     }
 });
 
