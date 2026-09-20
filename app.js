@@ -20,7 +20,6 @@ const getSongs = () => {
 };
 
 const showSongs = () => {
-
     console.clear();
 
     const songs = getSongs();
@@ -57,12 +56,13 @@ const showSongs = () => {
     }
 };
 
-const playSong = i => {
+function playSong(i) {
 
     const songs = getSongs();
 
     if (!songs[i]) return;
 
+    // Stop previous song
     if (player) {
         player.kill();
     }
@@ -76,8 +76,32 @@ const playSong = i => {
         path.join(dir, songs[i])
     ]);
 
+    // Keep reference to this particular player
+    const current = player;
+
+    player.on("close", () => {
+
+        // Ignore an old player that was manually stopped
+        if (player !== current) return;
+
+        player = null;
+
+        // Automatically play next song
+        if (++index < songs.length) {
+
+            playSong(index);
+
+        } else {
+
+            index = songs.length - 1;
+
+            showSongs();
+        }
+    });
+
+    // Keep the same UI
     showSongs();
-};
+}
 
 const pause = () => {
 
@@ -113,6 +137,7 @@ const quit = () => {
     process.stdin.pause();
 
     console.clear();
+
     console.log("Goodbye! 👋");
 
     process.exit();
@@ -153,12 +178,12 @@ process.stdin.on("data", data => {
         playSong(index);
     }
 
-    // A
+    // A / a
     if (key === 65 || key === 97) {
         pause();
     }
 
-    // D
+    // D / d
     if (key === 68 || key === 100) {
         resume();
     }
