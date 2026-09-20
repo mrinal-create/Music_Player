@@ -1,8 +1,10 @@
+const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
 const songsDir = path.join(__dirname, "songs");
 
+let player = null;
 let index = 0;
 
 const getSongs = () => {
@@ -38,10 +40,38 @@ const showSongs = () => {
     console.log("2    : All Songs");
     console.log("Q    : Quit");
 
-    console.log("\n■ No song playing");
+    if (player) {
+        console.log("\n▶ Playing");
+    } else {
+        console.log("\n■ No song playing");
+    }
+};
+
+const playSong = i => {
+
+    const songs = getSongs();
+
+    if (!songs[i]) return;
+
+    if (player) {
+        player.kill();
+    }
+
+    index = i;
+
+    player = spawn("afplay", [
+        path.join(songsDir, songs[i])
+    ]);
+
+    showSongs();
 };
 
 const quit = () => {
+
+    if (player) {
+        player.kill();
+    }
+
     process.stdin.setRawMode(false);
     process.stdin.pause();
 
@@ -83,7 +113,7 @@ process.stdin.on("data", data => {
 
     // ENTER
     if (key === 13) {
-        console.log("Play selected song");
+        playSong(index);
     }
 });
 
